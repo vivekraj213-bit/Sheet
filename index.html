@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Harvester PRO MAX</title>
+<title>Harvester Vishal 435 Daily Sheet</title>
 <style>
 body {font-family:Arial; margin:0; background:#eef2f7;}
 header {background:#1e272e; color:white; padding:15px; text-align:center;}
@@ -19,7 +19,7 @@ th {background:#2f3640; color:white;}
 </style>
 </head>
 <body><header>
-<h2>🚜 Harvester Vishal 435 Daily Sheet</h2>
+<h2>🚜 Harvester PRO MAX System</h2>
 </header><div class="container" id="loginPage">
 <h3>🔐 Login</h3>
 <input type="text" id="user" placeholder="Username">
@@ -27,6 +27,7 @@ th {background:#2f3640; color:white;}
 <button class="login" onclick="login()">Login</button>
 </div><div class="container" id="main" style="display:none;"><div class="card">
 <h3>➕ नया काम जोड़ें</h3>
+<input type="date" id="date" placeholder="Date">
 <input type="text" id="farmer" placeholder="किसान">
 <input type="text" id="village" placeholder="गांव">
 <select id="crop">
@@ -48,7 +49,7 @@ th {background:#2f3640; color:white;}
 </div><table>
 <thead>
 <tr>
-<th>नाम</th><th>गांव</th><th>फसल</th><th>एकड़</th><th>रेट</th><th>कुल</th><th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
+<th>Date</th><th>नाम</th><th>गांव</th><th>फसल</th><th>एकड़</th><th>रेट</th><th>कुल</th><th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="data"></tbody>
@@ -66,7 +67,7 @@ if(u=="V" && p=="1"){
 document.getElementById("loginPage").style.display="none";
 document.getElementById("main").style.display="block";
 show();
-}else{alert("केवल विवेक जी login कर पाएंगे");}
+}else{alert("login नही होगा जब तक विवेक जी ना कहे");}
 }
 
 function save(){
@@ -74,6 +75,7 @@ localStorage.setItem("harvesterPro", JSON.stringify(records));
 }
 
 function addRecord(){
+let date = dateInput.value;
 let farmer = farmerInput.value;
 let village = villageInput.value;
 let crop = cropInput.value;
@@ -85,11 +87,12 @@ let expense = parseFloat(expenseInput.value) || 0;
 let total = acre * rate;
 let due = total - paid;
 
-records.push({farmer,village,crop,acre,rate,total,paid,due,expense});
+records.push({date,farmer,village,crop,acre,rate,total,paid,due,expense});
 save();
 show();
 
-// Form Clear - सभी इनपुट क्लियर हो जाएं
+// Clear form fields
+dateInput.value = '';
 farmerInput.value = '';
 villageInput.value = '';
 cropInput.value = 'गेहूं';
@@ -109,6 +112,7 @@ totalIncome += r.total;
 totalExpense += r.expense;
 totalDue += r.due;
 data.innerHTML += `<tr>
+<td>${r.date}</td>
 <td>${r.farmer}</td>
 <td>${r.village}</td>
 <td>${r.crop}</td>
@@ -139,6 +143,7 @@ save(); show();
 
 function editRecord(i){
 let r = records[i];
+dateInput.value = r.date;
 farmerInput.value=r.farmer;
 villageInput.value=r.village;
 cropInput.value=r.crop;
@@ -157,9 +162,9 @@ row.style.display = row.innerText.toLowerCase().includes(val)?"":"none";
 }
 
 function downloadExcel(){
-let csv = 'नाम,गांव,फसल,एकड़,रेट,कुल,मिला,बाकी,खर्चा\n';
+let csv = 'दिनाँक,नाम,गांव,फसल,एकड़,रेट,कुल,मिला,बाकी,खर्चा\n';
 records.forEach(r=>{
-csv += `${r.farmer},${r.village},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+csv += `${r.date},${r.farmer},${r.village},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
 });
 let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 let link = document.createElement("a");
@@ -168,6 +173,7 @@ link.download = 'Harvester_Records.csv';
 link.click();
 }
 
+const dateInput = document.getElementById("date");
 const farmerInput = document.getElementById("farmer");
 const villageInput = document.getElementById("village");
 const cropInput = document.getElementById("crop");
@@ -176,6 +182,5 @@ const rateInput = document.getElementById("rate");
 const paidInput = document.getElementById("paid");
 const expenseInput = document.getElementById("expense");
 const search = document.getElementById("search");
-
 </script></body>
 </html>
