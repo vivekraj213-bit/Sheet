@@ -1,0 +1,167 @@
+<!DOCTYPE html><html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harvester Pro Max</title>
+<style>
+body { font-family: Arial; background:#eef2f3; margin:0; }
+.container { max-width:800px; margin:auto; padding:15px; }
+h1 { text-align:center; }
+.card { background:#fff; padding:15px; border-radius:10px; box-shadow:0 0 10px #ccc; margin-bottom:10px; }
+input, button { width:100%; padding:10px; margin:5px 0; }
+button { background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+.deleteBtn { background:red; }
+.editBtn { background:orange; }
+table { width:100%; margin-top:10px; border-collapse: collapse; }
+th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+th { background:#28a745; color:white; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Harvester Pro Max</h1><div class="card" id="loginBox">
+<h3>Login</h3>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div><div id="app" style="display:none;"><div class="card">
+<input type="text" id="search" placeholder="किसान खोजो..." onkeyup="displayData()">
+</div><div class="card">
+<form id="recordForm">
+<input type="date" id="date" required>
+<input type="text" id="farmer" placeholder="किसान" required>
+<input type="number" id="area" placeholder="एकड़" required>
+<input type="number" id="rate" placeholder="रेट" required>
+<input type="number" id="paid" placeholder="मिला" required>
+<button type="submit">Save</button>
+</form>
+</div><div class="card">
+<b>कुल कमाई:</b> ₹ <span id="totalIncome">0</span><br>
+<b>मिला:</b> ₹ <span id="totalPaid">0</span><br>
+<b>बाकी:</b> ₹ <span id="totalDue">0</span>
+</div><table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Farmer</th>
+<th>Area</th>
+<th>Total</th>
+<th>Paid</th>
+<th>Due</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="records"></tbody>
+</table><button onclick="downloadCSV()">Excel Download</button>
+
+</div>
+</div><script>
+let data = JSON.parse(localStorage.getItem('harvesterData')) || [];
+let editIndex = -1;
+
+function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+
+  if(u === 'admin' && p === '1234') {
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('app').style.display='block';
+  } else {
+    alert('Wrong login');
+  }
+}
+
+function displayData() {
+  const table = document.getElementById('records');
+  const search = document.getElementById('search').value.toLowerCase();
+  table.innerHTML='';
+
+  let totalIncome=0, totalPaid=0;
+
+  data.forEach((item,index)=>{
+    if(item.farmer.toLowerCase().includes(search)){
+      let due=item.total-item.paid;
+      totalIncome+=item.total;
+      totalPaid+=item.paid;
+
+      table.innerHTML+=`<tr>
+      <td>${item.date}</td>
+      <td>${item.farmer}</td>
+      <td>${item.area}</td>
+      <td>${item.total}</td>
+      <td>${item.paid}</td>
+      <td>${due}</td>
+      <td>
+      <button class='editBtn' onclick='editRecord(${index})'>Edit</button>
+      <button class='deleteBtn' onclick='deleteRecord(${index})'>Delete</button>
+      </td>
+      </tr>`;
+    }
+  });
+
+  document.getElementById('totalIncome').innerText=totalIncome;
+  document.getElementById('totalPaid').innerText=totalPaid;
+  document.getElementById('totalDue').innerText=totalIncome-totalPaid;
+}
+
+function editRecord(i){
+  const d=data[i];
+  document.getElementById('date').value=d.date;
+  document.getElementById('farmer').value=d.farmer;
+  document.getElementById('area').value=d.area;
+  document.getElementById('rate').value=d.total/d.area;
+  document.getElementById('paid').value=d.paid;
+  editIndex=i;
+}
+
+function deleteRecord(i){
+  if(confirm('Delete?')){
+    data.splice(i,1);
+    localStorage.setItem('harvesterData',JSON.stringify(data));
+    displayData();
+  }
+}
+
+document.getElementById('recordForm').addEventListener('submit',function(e){
+  e.preventDefault();
+
+  const date=dateInput.value;
+  const farmer=farmerInput.value;
+  const area=Number(areaInput.value);
+  const rate=Number(rateInput.value);
+  const paid=Number(paidInput.value);
+
+  const total=area*rate;
+
+  if(editIndex>-1){
+    data[editIndex]={date,farmer,area,total,paid};
+    editIndex=-1;
+  } else {
+    data.push({date,farmer,area,total,paid});
+  }
+
+  localStorage.setItem('harvesterData',JSON.stringify(data));
+  displayData();
+  this.reset();
+});
+
+const dateInput=document.getElementById('date');
+const farmerInput=document.getElementById('farmer');
+const areaInput=document.getElementById('area');
+const rateInput=document.getElementById('rate');
+const paidInput=document.getElementById('paid');
+
+function downloadCSV(){
+  let csv="Date,Farmer,Area,Total,Paid\n";
+  data.forEach(d=>{
+    csv+=`${d.date},${d.farmer},${d.area},${d.total},${d.paid}\n`;
+  });
+
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='harvester.csv';
+  a.click();
+}
+</script></body>
+</html>
