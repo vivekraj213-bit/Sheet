@@ -88,16 +88,26 @@ let due = total - paid;
 records.push({farmer,village,crop,acre,rate,total,paid,due,expense});
 save();
 show();
+
+// Form Clear - सभी इनपुट क्लियर हो जाएं
+farmerInput.value = '';
+villageInput.value = '';
+cropInput.value = 'गेहूं';
+acreInput.value = '';
+rateInput.value = '';
+paidInput.value = '';
+expenseInput.value = '';
 }
 
 function show(){
 let data = document.getElementById("data");
 data.innerHTML="";
-let income=0, totalExpense=0;
+let totalIncome=0, totalExpense=0, totalDue=0;
 
 records.forEach((r,i)=>{
-income += r.total;
+totalIncome += r.total;
 totalExpense += r.expense;
+totalDue += r.due;
 data.innerHTML += `<tr>
 <td>${r.farmer}</td>
 <td>${r.village}</td>
@@ -115,9 +125,9 @@ data.innerHTML += `<tr>
 </tr>`;
 });
 
-let profit = income - totalExpense;
+let profit = totalIncome - totalDue - totalExpense;
 
-document.getElementById("income").innerText = "कुल कमाई: ₹"+income;
+document.getElementById("income").innerText = "कुल कमाई: ₹"+totalIncome;
 document.getElementById("expenseShow").innerText = "कुल खर्चा: ₹"+totalExpense;
 document.getElementById("profit").innerText = "शुद्ध मुनाफा: ₹"+profit;
 }
