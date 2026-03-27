@@ -38,19 +38,17 @@ th {background:#2f3640; color:white;}
 <input type="number" id="acre" placeholder="एकड़">
 <input type="number" id="rate" placeholder="रेट">
 <input type="number" id="paid" placeholder="मिला पैसा">
+<input type="number" id="expense" placeholder="खर्चा (डीजल/लेबर)">
 <button class="add" onclick="addRecord()">Add</button>
-</div><div class="card">
-<h3>⛽ खर्चा (Diesel / मजदूरी)</h3>
-<input type="number" id="expense" placeholder="खर्चा">
-<button onclick="addExpense()">Add Expense</button>
-<h4 id="totalExpense">कुल खर्चा: ₹0</h4>
 </div><div class="card">
 <h3>🔍 सर्च</h3>
 <input type="text" id="search" onkeyup="searchData()" placeholder="नाम खोजें">
+</div><div class="card">
+<button onclick="downloadExcel()">📥 Excel डाउनलोड करें</button>
 </div><table>
 <thead>
 <tr>
-<th>नाम</th><th>गांव</th><th>फसल</th><th>एकड़</th><th>रेट</th><th>कुल</th><th>मिला</th><th>बाकी</th><th>Action</th>
+<th>नाम</th><th>गांव</th><th>फसल</th><th>एकड़</th><th>रेट</th><th>कुल</th><th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="data"></tbody>
@@ -60,7 +58,6 @@ th {background:#2f3640; color:white;}
 <h2 id="profit">शुद्ध मुनाफा: ₹0</h2>
 </div></div><script>
 let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
 function login(){
 let u = document.getElementById("user").value;
@@ -74,7 +71,6 @@ show();
 
 function save(){
 localStorage.setItem("harvesterPro", JSON.stringify(records));
-localStorage.setItem("expenses", JSON.stringify(expenses));
 }
 
 function addRecord(){
@@ -84,18 +80,12 @@ let crop = cropInput.value;
 let acre = parseFloat(acreInput.value);
 let rate = parseFloat(rateInput.value);
 let paid = parseFloat(paidInput.value);
+let expense = parseFloat(expenseInput.value) || 0;
 
 let total = acre * rate;
 let due = total - paid;
 
-records.push({farmer,village,crop,acre,rate,total,paid,due});
-save();
-show();
-}
-
-function addExpense(){
-let exp = parseFloat(document.getElementById("expense").value);
-expenses.push(exp);
+records.push({farmer,village,crop,acre,rate,total,paid,due,expense});
 save();
 show();
 }
@@ -103,10 +93,11 @@ show();
 function show(){
 let data = document.getElementById("data");
 data.innerHTML="";
-let income=0, expTotal=0;
+let income=0, totalExpense=0;
 
 records.forEach((r,i)=>{
 income += r.total;
+totalExpense += r.expense;
 data.innerHTML += `<tr>
 <td>${r.farmer}</td>
 <td>${r.village}</td>
@@ -116,6 +107,7 @@ data.innerHTML += `<tr>
 <td>${r.total}</td>
 <td>${r.paid}</td>
 <td>${r.due}</td>
+<td>${r.expense}</td>
 <td>
 <button class="edit" onclick="editRecord(${i})">Edit</button>
 <button class="delete" onclick="deleteRecord(${i})">Delete</button>
@@ -123,12 +115,10 @@ data.innerHTML += `<tr>
 </tr>`;
 });
 
-expenses.forEach(e=> expTotal+=e);
-
-let profit = income - expTotal;
+let profit = income - totalExpense;
 
 document.getElementById("income").innerText = "कुल कमाई: ₹"+income;
-document.getElementById("expenseShow").innerText = "कुल खर्चा: ₹"+expTotal;
+document.getElementById("expenseShow").innerText = "कुल खर्चा: ₹"+totalExpense;
 document.getElementById("profit").innerText = "शुद्ध मुनाफा: ₹"+profit;
 }
 
@@ -145,6 +135,7 @@ cropInput.value=r.crop;
 acreInput.value=r.acre;
 rateInput.value=r.rate;
 paidInput.value=r.paid;
+expenseInput.value=r.expense;
 deleteRecord(i);
 }
 
@@ -155,12 +146,26 @@ row.style.display = row.innerText.toLowerCase().includes(val)?"":"none";
 });
 }
 
+function downloadExcel(){
+let csv = 'नाम,गांव,फसल,एकड़,रेट,कुल,मिला,बाकी,खर्चा\n';
+records.forEach(r=>{
+csv += `${r.farmer},${r.village},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+});
+let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+let link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = 'Harvester_Records.csv';
+link.click();
+}
+
 const farmerInput = document.getElementById("farmer");
 const villageInput = document.getElementById("village");
 const cropInput = document.getElementById("crop");
 const acreInput = document.getElementById("acre");
 const rateInput = document.getElementById("rate");
 const paidInput = document.getElementById("paid");
+const expenseInput = document.getElementById("expense");
+const search = document.getElementById("search");
 
 </script></body>
 </html>
