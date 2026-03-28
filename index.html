@@ -158,167 +158,186 @@ text-decoration:underline;
 <script>
 
 let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
+let editIndex = -1; // एडिट मोड के लिए
+
+const addBtn = document.querySelector(".add");
 
 function login(){
-if(user.value=="V" && pass.value=="1"){
-loginPage.style.display="none";
-main.style.display="block";
-show(records);
-}else{
-alert("गलत पासवर्ड");
-}
+  if(user.value=="V" && pass.value=="1"){
+    loginPage.style.display="none";
+    main.style.display="block";
+    show(records);
+  } else {
+    alert("गलत पासवर्ड");
+  }
 }
 
 function logout(){
-main.style.display="none";
-loginPage.style.display="flex";
+  main.style.display="none";
+  loginPage.style.display="flex";
 }
 
 function save(){
-localStorage.setItem("harvesterPro", JSON.stringify(records));
+  localStorage.setItem("harvesterPro", JSON.stringify(records));
+}
+
+function clearFields(){
+  date.value="";
+  farmer.value="";
+  village.value="";
+  mobile.value="";
+  crop.value="गेहूं";
+  acre.value="";
+  rate.value="";
+  paid.value="";
+  expense.value="";
 }
 
 function addRecord(){
+  let total = acre.value * rate.value;
+  let due = total - paid.value;
 
-let total = acre.value * rate.value;
-let due = total - paid.value;
+  if(editIndex === -1){
+    records.push({
+      date:date.value,
+      farmer:farmer.value,
+      village:village.value,
+      mobile:mobile.value,
+      crop:crop.value,
+      acre:+acre.value,
+      rate:+rate.value,
+      total:total,
+      paid:+paid.value,
+      due:due,
+      expense:+expense.value || 0
+    });
+  } else {
+    records[editIndex] = {
+      date:date.value,
+      farmer:farmer.value,
+      village:village.value,
+      mobile:mobile.value,
+      crop:crop.value,
+      acre:+acre.value,
+      rate:+rate.value,
+      total:total,
+      paid:+paid.value,
+      due:due,
+      expense:+expense.value || 0
+    };
+    editIndex = -1;
+    addBtn.innerText = "Add";
+  }
 
-records.push({
-date:date.value,
-farmer:farmer.value,
-village:village.value,
-mobile:mobile.value,
-crop:crop.value,
-acre:+acre.value,
-rate:+rate.value,
-total:total,
-paid:+paid.value,
-due:due,
-expense:+expense.value || 0
-});
-
-save();
-show(records);
-
-date.value="";
-farmer.value="";
-village.value="";
-mobile.value="";
-acre.value="";
-rate.value="";
-paid.value="";
-expense.value="";
+  save();
+  show(records);
+  clearFields();
 }
 
 function show(dataArr){
+  let html="";
+  let dueHTML="";
+  let totalIncome=0, totalPaid=0, totalExpense=0;
 
-let html="";
-let dueHTML="";
-let totalIncome=0, totalPaid=0, totalExpense=0;
+  dataArr.forEach((r,i)=>{
+    totalIncome += r.total;
+    totalPaid += r.paid;
+    totalExpense += r.expense;
 
-dataArr.forEach((r,i)=>{
+    if(r.due > 0){
+      dueHTML += `<li>
+      ${r.farmer} - ₹${r.due}
+      <a href="tel:${r.mobile}">📞</a>
+      <a href="https://wa.me/91${r.mobile}?text=आपका ₹${r.due} बाकी है">📲</a>
+      </li>`;
+    }
 
-totalIncome += r.total;
-totalPaid += r.paid;
-totalExpense += r.expense;
+    html += `<tr>
+    <td>${r.date}</td>
+    <td>${r.farmer}</td>
+    <td>${r.village}</td>
+    <td>${r.mobile}</td>
+    <td>${r.crop}</td>
+    <td>${r.acre}</td>
+    <td>${r.total}</td>
+    <td>${r.paid}</td>
+    <td class="${r.due>0?'dueHighlight':''}">${r.due}</td>
+    <td>${r.expense}</td>
+    <td>
+      <button class="edit" onclick="editRecord(${i})">Edit</button>
+      <button class="delete" onclick="deleteRecord(${i})">Delete</button>
+    </td>
+    </tr>`;
+  });
 
-if(r.due > 0){
-dueHTML += `<li>
-${r.farmer} - ₹${r.due}
-<a href="tel:${r.mobile}">📞</a>
-<a href="https://wa.me/91${r.mobile}?text=आपका ₹${r.due} बाकी है">📲</a>
-</li>`;
-}
+  data.innerHTML = html;
+  dueList.innerHTML = dueHTML;
 
-html += `<tr>
-<td>${r.date}</td>
-<td>${r.farmer}</td>
-<td>${r.village}</td>
-<td>${r.mobile}</td>
-<td>${r.crop}</td>
-<td>${r.acre}</td>
-<td>${r.total}</td>
-<td>${r.paid}</td>
-<td class="${r.due>0?'dueHighlight':''}">${r.due}</td>
-<td>${r.expense}</td>
-<td>
-<button class="edit" onclick="editRecord(${i})">Edit</button>
-<button class="delete" onclick="deleteRecord(${i})">Delete</button>
-</td>
-</tr>`;
-});
+  let profitVal = totalPaid - totalExpense;
 
-data.innerHTML = html;
-dueList.innerHTML = dueHTML;
-
-let profitVal = totalPaid - totalExpense;
-
-income.innerText = "कुल काम: ₹"+totalIncome;
-paidShow.innerText = "मिला पैसा: ₹"+totalPaid;
-expenseShow.innerText = "खर्चा: ₹"+totalExpense;
-profit.innerText = "मुनाफा: ₹"+profitVal;
-
+  income.innerText = "कुल काम: ₹"+totalIncome;
+  paidShow.innerText = "मिला पैसा: ₹"+totalPaid;
+  expenseShow.innerText = "खर्चा: ₹"+totalExpense;
+  profit.innerText = "मुनाफा: ₹"+profitVal;
 }
 
 function deleteRecord(i){
-
-if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
-records.splice(i,1);
-save();
-show(records);
+  if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
+    records.splice(i,1);
+    save();
+    show(records);
+    clearFields();
+    editIndex = -1;
+    addBtn.innerText = "Add";
+  }
 }
-
-}
-  
 
 function editRecord(i){
-let r = records[i];
+  let r = records[i];
 
-date.value=r.date;
-farmer.value=r.farmer;
-village.value=r.village;
-mobile.value=r.mobile;
-crop.value=r.crop;
-acre.value=r.acre;
-rate.value=r.rate;
-paid.value=r.paid;
-expense.value=r.expense;
+  date.value=r.date;
+  farmer.value=r.farmer;
+  village.value=r.village;
+  mobile.value=r.mobile;
+  crop.value=r.crop;
+  acre.value=r.acre;
+  rate.value=r.rate;
+  paid.value=r.paid;
+  expense.value=r.expense;
 
-deleteRecord(i);
+  editIndex = i;
+  addBtn.innerText = "Update";
 }
 
 function searchData(){
-let val = search.value.toLowerCase();
-let filtered = records.filter(r =>
-r.farmer.toLowerCase().includes(val)
-);
-show(filtered);
+  let val = search.value.toLowerCase();
+  let filtered = records.filter(r =>
+    r.farmer.toLowerCase().includes(val)
+  );
+  show(filtered);
 }
 
 function filterByDate(){
-let f = fromDate.value;
-let t = toDate.value;
-let filtered = records.filter(r =>
-r.date >= f && r.date <= t
-);
-show(filtered);
+  let f = fromDate.value;
+  let t = toDate.value;
+  let filtered = records.filter(r =>
+    r.date >= f && r.date <= t
+  );
+  show(filtered);
 }
 
-
-
 function downloadExcel(){
+  let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
 
-let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
+  records.forEach(r=>{
+    csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+  });
 
-records.forEach(r=>{
-csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
-});
-
-let blob = new Blob([csv]);
-let a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = "harvester.csv";
-a.click();
+  let blob = new Blob([csv]);
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "harvester.csv";
+  a.click();
 }
 
 </script>
