@@ -1,73 +1,178 @@
-<!DOCTYPE html><html lang="hi">
+<!DOCTYPE html>
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Harvester Vishal 435 Daily Sheet</title>
+<title>Harvester FINAL PRO MAX</title>
+
 <style>
 body {font-family:Arial; margin:0; background:#eef2f7;}
 header {background:#1e272e; color:white; padding:15px; text-align:center;}
-.container {padding:20px;}
-input, select {padding:8px; margin:5px;}
-button {padding:8px 12px; margin:5px; cursor:pointer;}
+
+/* LOGIN */
+#loginPage {
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background: linear-gradient(135deg, #667eea, #764ba2);
+}
+.loginBox {
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+text-align:center;
+}
+.loginBox input {
+width:85%;
+margin:10px 0;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+.login {
+background: linear-gradient(45deg, #00b894, #00cec9);
+color:white;
+width:90%;
+}
+
+/* MAIN */
+.container {padding:15px;}
+input, select {
+padding:10px; margin:5px;
+border-radius:5px; border:1px solid #ccc;
+}
+button {
+padding:10px 15px; margin:5px;
+border:none; border-radius:5px;
+cursor:pointer; font-weight:bold;
+}
 .add {background:green; color:white;}
 .delete {background:red; color:white;}
 .edit {background:orange; color:white;}
-.login {background:#0984e3; color:white;}
+.logout {background:black; color:white;}
+.clear {background:#6c5ce7; color:white;}
+
 table {width:100%; border-collapse:collapse; margin-top:20px;}
 th, td {border:1px solid #ccc; padding:10px; text-align:center;}
 th {background:#2f3640; color:white;}
-.card {background:white; padding:15px; margin-top:15px; border-radius:10px;}
+
+.card {
+background:white; padding:15px;
+margin-top:15px; border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.dueHighlight {
+color:red;
+font-weight:bold;
+text-decoration:underline;
+}
 </style>
 </head>
-<body><header>
-<h2>🚜 Harvester Vishal 435 Daily Sheet</h2>
-</header><div class="container" id="loginPage">
-<h3>🔐 Login</h3>
+
+<body>
+
+<header>
+<h2>🚜 Harvester FINAL PRO MAX</h2>
+</header>
+
+<!-- LOGIN -->
+<div id="loginPage">
+<div class="loginBox">
+<h2>🔐 Login</h2>
 <input type="text" id="user" placeholder="Username">
 <input type="password" id="pass" placeholder="Password">
 <button class="login" onclick="login()">Login</button>
-</div><div class="container" id="main" style="display:none;"><div class="card">
-<h3>➕ नया काम जोड़ें</h3>
-<input type="date" id="date" placeholder="Date">
+</div>
+</div>
+
+<!-- MAIN -->
+<div class="container" id="main" style="display:none;">
+
+<button class="logout" onclick="logout()">Logout</button>
+
+<div class="card">
+<h3>➕ नया काम</h3>
+
+<input type="date" id="date">
 <input type="text" id="farmer" placeholder="किसान">
 <input type="text" id="village" placeholder="गांव">
+<input type="text" id="mobile" placeholder="मोबाइल">
+
 <select id="crop">
 <option>गेहूं</option>
 <option>धान</option>
 <option>लाही</option>
 <option>सरसों</option>
 </select>
+
 <input type="number" id="acre" placeholder="एकड़">
 <input type="number" id="rate" placeholder="रेट">
 <input type="number" id="paid" placeholder="मिला पैसा">
-<input type="number" id="expense" placeholder="खर्चा (डीजल/लेबर)">
+<input type="number" id="expense" placeholder="खर्चा">
+
 <button class="add" onclick="addRecord()">Add</button>
-</div><div class="card">
-<h3>🔍 सर्च</h3>
+</div>
+
+<div class="card">
+<h3>🔍 Search + Date Filter</h3>
+
 <input type="text" id="search" onkeyup="searchData()" placeholder="नाम खोजें">
-</div><div class="card">
-<button onclick="downloadExcel()">📥 Excel डाउनलोड करें</button>
-</div><table>
+
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+<button onclick="filterByDate()">Filter</button>
+
+</div>
+
+<div class="card">
+<button onclick="downloadExcel()">📥 Excel</button>
+<button class="clear" onclick="clearAll()">🗑️ Delete All</button>
+</div>
+
+<div class="card">
+<h3>🔴 बाकी वाले (Priority)</h3>
+<ul id="dueList"></ul>
+</div>
+
+<table>
 <thead>
 <tr>
-<th>Date</th><th>नाम</th><th>गांव</th><th>फसल</th><th>एकड़</th><th>रेट</th><th>कुल</th><th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
+<th>Date</th><th>नाम</th><th>गांव</th><th>मोबाइल</th>
+<th>फसल</th><th>एकड़</th><th>कुल</th>
+<th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="data"></tbody>
-</table><div class="card">
-<h3 id="income">कुल कमाई: ₹0</h3>
-<h3 id="expenseShow">कुल खर्चा: ₹0</h3>
-<h2 id="profit">शुद्ध मुनाफा: ₹0</h2>
-</div></div><script>
+</table>
+
+<div class="card">
+<h3 id="income">कुल काम: ₹0</h3>
+<h3 id="paidShow">मिला पैसा: ₹0</h3>
+<h3 id="expenseShow">खर्चा: ₹0</h3>
+<h2 id="profit">मुनाफा: ₹0</h2>
+</div>
+
+</div>
+
+<script>
+
 let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
 
 function login(){
-let u = document.getElementById("user").value;
-let p = document.getElementById("pass").value;
-if(u=="V" && p=="1"){
-document.getElementById("loginPage").style.display="none";
-document.getElementById("main").style.display="block";
-show();
-}else{alert("login नही होगा जब तक विवेक जी ना कहे");}
+if(user.value=="V" && pass.value=="1"){
+loginPage.style.display="none";
+main.style.display="block";
+show(records);
+}else{
+alert("गलत पासवर्ड");
+}
+}
+
+function logout(){
+main.style.display="none";
+loginPage.style.display="flex";
 }
 
 function save(){
@@ -75,52 +180,67 @@ localStorage.setItem("harvesterPro", JSON.stringify(records));
 }
 
 function addRecord(){
-let date = dateInput.value;
-let farmer = farmerInput.value;
-let village = villageInput.value;
-let crop = cropInput.value;
-let acre = parseFloat(acreInput.value);
-let rate = parseFloat(rateInput.value);
-let paid = parseFloat(paidInput.value);
-let expense = parseFloat(expenseInput.value) || 0;
 
-let total = acre * rate;
-let due = total - paid;
+let total = acre.value * rate.value;
+let due = total - paid.value;
 
-records.push({date,farmer,village,crop,acre,rate,total,paid,due,expense});
+records.push({
+date:date.value,
+farmer:farmer.value,
+village:village.value,
+mobile:mobile.value,
+crop:crop.value,
+acre:+acre.value,
+rate:+rate.value,
+total:total,
+paid:+paid.value,
+due:due,
+expense:+expense.value || 0
+});
+
 save();
-show();
+show(records);
 
-// Clear form fields
-dateInput.value = '';
-farmerInput.value = '';
-villageInput.value = '';
-cropInput.value = 'गेहूं';
-acreInput.value = '';
-rateInput.value = '';
-paidInput.value = '';
-expenseInput.value = '';
+date.value="";
+farmer.value="";
+village.value="";
+mobile.value="";
+acre.value="";
+rate.value="";
+paid.value="";
+expense.value="";
 }
 
-function show(){
-let data = document.getElementById("data");
-data.innerHTML="";
-let totalIncome=0, totalExpense=0, totalDue=0;
+function show(dataArr){
 
-records.forEach((r,i)=>{
+let html="";
+let dueHTML="";
+let totalIncome=0, totalPaid=0, totalExpense=0;
+
+dataArr.forEach((r,i)=>{
+
 totalIncome += r.total;
+totalPaid += r.paid;
 totalExpense += r.expense;
-totalDue += r.due;
-data.innerHTML += `<tr>
+
+if(r.due > 0){
+dueHTML += `<li>
+${r.farmer} - ₹${r.due}
+<a href="tel:${r.mobile}">📞</a>
+<a href="https://wa.me/91${r.mobile}?text=आपका ₹${r.due} बाकी है">📲</a>
+</li>`;
+}
+
+html += `<tr>
 <td>${r.date}</td>
 <td>${r.farmer}</td>
 <td>${r.village}</td>
+<td>${r.mobile}</td>
 <td>${r.crop}</td>
 <td>${r.acre}</td>
-<td>${r.rate}</td>
 <td>${r.total}</td>
 <td>${r.paid}</td>
-<td>${r.due}</td>
+<td class="${r.due>0?'dueHighlight':''}">${r.due}</td>
 <td>${r.expense}</td>
 <td>
 <button class="edit" onclick="editRecord(${i})">Edit</button>
@@ -129,58 +249,81 @@ data.innerHTML += `<tr>
 </tr>`;
 });
 
-let profit = totalIncome - totalDue - totalExpense;
+data.innerHTML = html;
+dueList.innerHTML = dueHTML;
 
-document.getElementById("income").innerText = "कुल कमाई: ₹"+totalIncome;
-document.getElementById("expenseShow").innerText = "कुल खर्चा: ₹"+totalExpense;
-document.getElementById("profit").innerText = "शुद्ध मुनाफा: ₹"+profit;
+let profitVal = totalPaid - totalExpense;
+
+income.innerText = "कुल काम: ₹"+totalIncome;
+paidShow.innerText = "मिला पैसा: ₹"+totalPaid;
+expenseShow.innerText = "खर्चा: ₹"+totalExpense;
+profit.innerText = "मुनाफा: ₹"+profitVal;
+
 }
 
 function deleteRecord(i){
 records.splice(i,1);
-save(); show();
+save();
+show(records);
 }
 
 function editRecord(i){
 let r = records[i];
-dateInput.value = r.date;
-farmerInput.value=r.farmer;
-villageInput.value=r.village;
-cropInput.value=r.crop;
-acreInput.value=r.acre;
-rateInput.value=r.rate;
-paidInput.value=r.paid;
-expenseInput.value=r.expense;
+
+date.value=r.date;
+farmer.value=r.farmer;
+village.value=r.village;
+mobile.value=r.mobile;
+crop.value=r.crop;
+acre.value=r.acre;
+rate.value=r.rate;
+paid.value=r.paid;
+expense.value=r.expense;
+
 deleteRecord(i);
 }
 
 function searchData(){
 let val = search.value.toLowerCase();
-document.querySelectorAll("tbody tr").forEach(row=>{
-row.style.display = row.innerText.toLowerCase().includes(val)?"":"none";
-});
+let filtered = records.filter(r =>
+r.farmer.toLowerCase().includes(val)
+);
+show(filtered);
+}
+
+function filterByDate(){
+let f = fromDate.value;
+let t = toDate.value;
+let filtered = records.filter(r =>
+r.date >= f && r.date <= t
+);
+show(filtered);
+}
+
+function clearAll(){
+if(confirm("सारा डेटा डिलीट करें?")){
+records=[];
+save();
+show(records);
+}
 }
 
 function downloadExcel(){
-let csv = 'दिनाँक,नाम,गांव,फसल,एकड़,रेट,कुल,मिला,बाकी,खर्चा\n';
+
+let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
+
 records.forEach(r=>{
-csv += `${r.date},${r.farmer},${r.village},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
 });
-let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = 'Harvester_Records.csv';
-link.click();
+
+let blob = new Blob([csv]);
+let a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "harvester.csv";
+a.click();
 }
 
-const dateInput = document.getElementById("date");
-const farmerInput = document.getElementById("farmer");
-const villageInput = document.getElementById("village");
-const cropInput = document.getElementById("crop");
-const acreInput = document.getElementById("acre");
-const rateInput = document.getElementById("rate");
-const paidInput = document.getElementById("paid");
-const expenseInput = document.getElementById("expense");
-const search = document.getElementById("search");
-</script></body>
+</script>
+
+</body>
 </html>
