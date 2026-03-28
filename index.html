@@ -189,7 +189,7 @@ let extraRecords = JSON.parse(localStorage.getItem("extraExpense")) || [];
 const addBtn = document.querySelector(".add");
 
 // Admin password for delete
-const adminPassword = "admin123";  // <-- Delete के लिए पासवर्ड, अपनी पसंद का रख सकते हो
+const adminPassword = "1254";  // <-- Delete के लिए पासवर्ड, अपनी पसंद का रख सकते हो
 
 function login(){
   if(user.value=="V" && pass.value=="1"){
@@ -313,12 +313,12 @@ function show(dataArr){
 
 // Delete harvester record with Admin password
 function deleteRecord(i){
-  let pass = prompt("रिकॉर्ड डिलीट करने के लिए Admin Password डालें:");
+  let pass = prompt("रिकॉर्ड डिलीट करने के लिए पहले विवेक जी से अनुमति लीजिये");
   if(pass !== adminPassword){
-    alert("गलत पासवर्ड! रिकॉर्ड डिलीट नहीं हुआ।");
+    alert("गलत पासवर्ड! मैने कहा था की पहले अनुमति लीजिये");
     return;
   }
-  if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
+  if(confirm("इसका मतलब आपने अनुमति ले ली है यह रिकॉर्ड डिलीट करना चाहते हैं?")){
     records.splice(i,1);
     save();
     show(records);
@@ -421,9 +421,9 @@ function showExtra(){
 
 // Delete extra expense with Admin password
 function deleteExtra(i){
-  let pass = prompt("Extra खर्चा डिलीट करने के लिए Admin Password डालें:");
+  let pass = prompt("क्या आपने विवेक जी की अनुमति लिया है");
   if(pass !== adminPassword){
-    alert("गलत पासवर्ड! Extra खर्चा डिलीट नहीं हुआ।");
+    alert("पहले अनुमति लेकर आइये फिर डिलीट होगा");
     return;
   }
   if(confirm("क्या आप इस Extra खर्चा को हटाना चाहते हैं?")){
