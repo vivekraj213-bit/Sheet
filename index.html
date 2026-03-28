@@ -74,7 +74,7 @@ text-decoration:underline;
 <body>
 
 <header>
-<h2>🚜 Harvester FINAL PRO MAX</h2>
+<h2>🚜 Harvester Vishal 435 Daily Sheet</h2>
 </header>
 
 <!-- LOGIN -->
@@ -128,7 +128,6 @@ text-decoration:underline;
 
 <div class="card">
 <button onclick="downloadExcel()">📥 Excel</button>
-<button class="clear" onclick="clearAll()">🗑️ Delete All</button>
 </div>
 
 <div class="card">
@@ -166,7 +165,7 @@ loginPage.style.display="none";
 main.style.display="block";
 show(records);
 }else{
-alert("गलत पासवर्ड");
+alert("कृपया विवेक से अनुमति ले के आये।");
 }
 }
 
@@ -262,9 +261,13 @@ profit.innerText = "मुनाफा: ₹"+profitVal;
 }
 
 function deleteRecord(i){
+
+if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
 records.splice(i,1);
 save();
 show(records);
+}
+
 }
 
 function editRecord(i){
@@ -298,14 +301,6 @@ let filtered = records.filter(r =>
 r.date >= f && r.date <= t
 );
 show(filtered);
-}
-
-function clearAll(){
-if(confirm("सारा डेटा डिलीट करें?")){
-records=[];
-save();
-show(records);
-}
 }
 
 function downloadExcel(){
