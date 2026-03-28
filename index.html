@@ -92,6 +92,7 @@ text-decoration:underline;
 
 <button class="logout" onclick="logout()">Logout</button>
 
+<!-- HARVESTER RECORD CARD -->
 <div class="card">
 <h3>➕ नया काम</h3>
 
@@ -115,6 +116,7 @@ text-decoration:underline;
 <button class="add" onclick="addRecord()">Add</button>
 </div>
 
+<!-- SEARCH & FILTER -->
 <div class="card">
 <h3>🔍 Search + Date Filter</h3>
 
@@ -153,20 +155,48 @@ text-decoration:underline;
 <h2 id="profit">मुनाफा: ₹0</h2>
 </div>
 
+<!-- EXTRA EXPENSE CARD -->
+<div class="card">
+<h3>💰 एक्स्ट्रा खर्चा</h3>
+<input type="text" id="extraItem" placeholder="Item / खर्चा विवरण">
+<input type="number" id="extraRate" placeholder="Rate / ₹">
+<input type="number" id="extraQty" placeholder="Quantity">
+<input type="date" id="extraDate">
+<button class="add" onclick="addExtra()">Add</button>
+
+<table>
+<thead>
+<tr>
+<th>S.No.</th>
+<th>Item</th>
+<th>Rate</th>
+<th>Quantity</th>
+<th>Total</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="extraData"></tbody>
+</table>
+<h4 id="extraDayTotal">कुल खर्चा: ₹0</h4>
 </div>
 
 <script>
-
 let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
-let editIndex = -1; // एडिट मोड के लिए
+let editIndex = -1;
+let extraRecords = JSON.parse(localStorage.getItem("extraExpense")) || [];
 
 const addBtn = document.querySelector(".add");
+
+// Admin password for delete
+const adminPassword = "admin123";  // <-- Delete के लिए पासवर्ड, अपनी पसंद का रख सकते हो
 
 function login(){
   if(user.value=="V" && pass.value=="1"){
     loginPage.style.display="none";
     main.style.display="block";
     show(records);
+    showExtra();
   } else {
     alert("कृपया विवेक जी से अनुमति लाइए");
   }
@@ -281,7 +311,13 @@ function show(dataArr){
   profit.innerText = "मुनाफा: ₹"+profitVal;
 }
 
+// Delete harvester record with Admin password
 function deleteRecord(i){
+  let pass = prompt("रिकॉर्ड डिलीट करने के लिए Admin Password डालें:");
+  if(pass !== adminPassword){
+    alert("गलत पासवर्ड! रिकॉर्ड डिलीट नहीं हुआ।");
+    return;
+  }
   if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
     records.splice(i,1);
     save();
@@ -294,7 +330,6 @@ function deleteRecord(i){
 
 function editRecord(i){
   let r = records[i];
-
   date.value=r.date;
   farmer.value=r.farmer;
   village.value=r.village;
@@ -304,7 +339,6 @@ function editRecord(i){
   rate.value=r.rate;
   paid.value=r.paid;
   expense.value=r.expense;
-
   editIndex = i;
   addBtn.innerText = "Update";
 }
@@ -328,11 +362,9 @@ function filterByDate(){
 
 function downloadExcel(){
   let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
-
   records.forEach(r=>{
     csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
   });
-
   let blob = new Blob([csv]);
   let a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -340,6 +372,69 @@ function downloadExcel(){
   a.click();
 }
 
+/* EXTRA EXPENSE FUNCTIONS */
+
+function addExtra(){
+  if(!extraItem.value || !extraRate.value || !extraQty.value || !extraDate.value){
+    alert("सभी फील्ड भरें");
+    return;
+  }
+  let total = +extraRate.value * +extraQty.value;
+  extraRecords.push({
+    item: extraItem.value,
+    rate: +extraRate.value,
+    qty: +extraQty.value,
+    total: total,
+    date: extraDate.value
+  });
+  localStorage.setItem("extraExpense", JSON.stringify(extraRecords));
+  showExtra();
+  extraItem.value = "";
+  extraRate.value = "";
+  extraQty.value = "";
+  extraDate.value = "";
+}
+
+function showExtra(){
+  let html = "";
+  let totalsByDate = {};
+  extraRecords.forEach((r,i)=>{
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${r.item}</td>
+      <td>₹${r.rate}</td>
+      <td>${r.qty}</td>
+      <td>₹${r.total}</td>
+      <td>${r.date}</td>
+      <td><button class="delete" onclick="deleteExtra(${i})">Delete</button></td>
+    </tr>`;
+    if(!totalsByDate[r.date]) totalsByDate[r.date] = 0;
+    totalsByDate[r.date] += r.total;
+  });
+  extraData.innerHTML = html;
+  let totalHtml = "";
+  for(let date in totalsByDate){
+    totalHtml += `${date}: ₹${totalsByDate[date]} <br>`;
+  }
+  extraDayTotal.innerHTML = `<strong>दिन के हिसाब से कुल खर्चा:</strong><br>` + totalHtml;
+}
+
+// Delete extra expense with Admin password
+function deleteExtra(i){
+  let pass = prompt("Extra खर्चा डिलीट करने के लिए Admin Password डालें:");
+  if(pass !== adminPassword){
+    alert("गलत पासवर्ड! Extra खर्चा डिलीट नहीं हुआ।");
+    return;
+  }
+  if(confirm("क्या आप इस Extra खर्चा को हटाना चाहते हैं?")){
+    extraRecords.splice(i,1);
+    localStorage.setItem("extraExpense", JSON.stringify(extraRecords));
+    showExtra();
+  }
+}
+
+// Page load
+showExtra();
 </script>
 
 </body>
