@@ -2,12 +2,13 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Harvester PRO FINAL</title>
+<title>Harvester FINAL PRO MAX</title>
 
 <style>
 body {font-family:Arial; margin:0; background:#eef2f7;}
 header {background:#1e272e; color:white; padding:15px; text-align:center;}
 
+/* LOGIN */
 #loginPage {
 display:flex;
 justify-content:center;
@@ -29,8 +30,13 @@ padding:12px;
 border-radius:8px;
 border:1px solid #ccc;
 }
-.login {background:#00b894;color:white;width:90%;}
+.login {
+background: linear-gradient(45deg, #00b894, #00cec9);
+color:white;
+width:90%;
+}
 
+/* MAIN */
 .container {padding:15px;}
 input, select {
 padding:10px; margin:5px;
@@ -42,10 +48,10 @@ border:none; border-radius:5px;
 cursor:pointer; font-weight:bold;
 }
 .add {background:green; color:white;}
-.update {background:#0984e3; color:white;}
 .delete {background:red; color:white;}
 .edit {background:orange; color:white;}
 .logout {background:black; color:white;}
+.clear {background:#6c5ce7; color:white;}
 
 table {width:100%; border-collapse:collapse; margin-top:20px;}
 th, td {border:1px solid #ccc; padding:10px; text-align:center;}
@@ -68,7 +74,7 @@ text-decoration:underline;
 <body>
 
 <header>
-<h2>🚜 Harvester PRO FINAL</h2>
+<h2>🚜 Harvester FINAL PRO MAX</h2>
 </header>
 
 <!-- LOGIN -->
@@ -106,9 +112,27 @@ text-decoration:underline;
 <input type="number" id="paid" placeholder="मिला पैसा">
 <input type="number" id="expense" placeholder="खर्चा">
 
-<button class="add" id="addBtn" onclick="addRecord()">Add</button>
-<button class="update" id="updateBtn" onclick="updateRecord()" style="display:none;">Update</button>
+<button class="add" onclick="addRecord()">Add</button>
+</div>
 
+<div class="card">
+<h3>🔍 Search + Date Filter</h3>
+
+<input type="text" id="search" onkeyup="searchData()" placeholder="नाम खोजें">
+
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+<button onclick="filterByDate()">Filter</button>
+
+</div>
+
+<div class="card">
+<button onclick="downloadExcel()">📥 Excel</button>
+</div>
+
+<div class="card">
+<h3>🔴 बाकी वाले (Priority)</h3>
+<ul id="dueList"></ul>
 </div>
 
 <table>
@@ -134,15 +158,14 @@ text-decoration:underline;
 <script>
 
 let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
-let editIndex = -1;
 
 function login(){
 if(user.value=="V" && pass.value=="1"){
 loginPage.style.display="none";
 main.style.display="block";
-show();
+show(records);
 }else{
-alert("कृपया विवेक जी से अनुमति ले कर आये ");
+alert("गलत पासवर्ड");
 }
 }
 
@@ -175,77 +198,37 @@ expense:+expense.value || 0
 });
 
 save();
-show();
-clearForm();
+show(records);
+
+date.value="";
+farmer.value="";
+village.value="";
+mobile.value="";
+acre.value="";
+rate.value="";
+paid.value="";
+expense.value="";
 }
 
-function editRecord(i){
-
-let r = records[i];
-
-date.value=r.date;
-farmer.value=r.farmer;
-village.value=r.village;
-mobile.value=r.mobile;
-crop.value=r.crop;
-acre.value=r.acre;
-rate.value=r.rate;
-paid.value=r.paid;
-expense.value=r.expense;
-
-editIndex = i;
-
-addBtn.style.display="none";
-updateBtn.style.display="inline-block";
-}
-
-function updateRecord(){
-
-let total = acre.value * rate.value;
-let due = total - paid.value;
-
-records[editIndex] = {
-date:date.value,
-farmer:farmer.value,
-village:village.value,
-mobile:mobile.value,
-crop:crop.value,
-acre:+acre.value,
-rate:+rate.value,
-total:total,
-paid:+paid.value,
-due:due,
-expense:+expense.value || 0
-};
-
-save();
-show();
-clearForm();
-
-addBtn.style.display="inline-block";
-updateBtn.style.display="none";
-}
-
-function deleteRecord(i){
-
-if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
-records.splice(i,1);
-save();
-show();
-}
-
-}
-
-function show(){
+function show(dataArr){
 
 let html="";
+let dueHTML="";
 let totalIncome=0, totalPaid=0, totalExpense=0;
 
-records.forEach((r,i)=>{
+dataArr.forEach((r,i)=>{
 
 totalIncome += r.total;
 totalPaid += r.paid;
 totalExpense += r.expense;
+
+if(r.due > 0){
+dueHTML += `<li>
+${r.farmer} - ₹${r.due}
+<a href="tel:${r.mobile}">📞</a>
+<a href="https://wa.me/91${r.mobile}?text=आपका ₹${r.due} बाकी है">📲</a>
+</li>`;
+}
 
 html += `<tr>
 <td>${r.date}</td>
@@ -266,6 +249,7 @@ html += `<tr>
 });
 
 data.innerHTML = html;
+dueList.innerHTML = dueHTML;
 
 let profitVal = totalPaid - totalExpense;
 
@@ -276,15 +260,65 @@ profit.innerText = "मुनाफा: ₹"+profitVal;
 
 }
 
-function clearForm(){
-date.value="";
-farmer.value="";
-village.value="";
-mobile.value="";
-acre.value="";
-rate.value="";
-paid.value="";
-expense.value="";
+function deleteRecord(i){
+
+if(confirm("क्या आप सच में यह रिकॉर्ड डिलीट करना चाहते हैं?")){
+records.splice(i,1);
+save();
+show(records);
+}
+
+}
+  
+
+function editRecord(i){
+let r = records[i];
+
+date.value=r.date;
+farmer.value=r.farmer;
+village.value=r.village;
+mobile.value=r.mobile;
+crop.value=r.crop;
+acre.value=r.acre;
+rate.value=r.rate;
+paid.value=r.paid;
+expense.value=r.expense;
+
+deleteRecord(i);
+}
+
+function searchData(){
+let val = search.value.toLowerCase();
+let filtered = records.filter(r =>
+r.farmer.toLowerCase().includes(val)
+);
+show(filtered);
+}
+
+function filterByDate(){
+let f = fromDate.value;
+let t = toDate.value;
+let filtered = records.filter(r =>
+r.date >= f && r.date <= t
+);
+show(filtered);
+}
+
+
+
+function downloadExcel(){
+
+let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
+
+records.forEach(r=>{
+csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+});
+
+let blob = new Blob([csv]);
+let a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "harvester.csv";
+a.click();
 }
 
 </script>
