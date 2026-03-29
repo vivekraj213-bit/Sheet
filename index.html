@@ -112,6 +112,7 @@ text-decoration:underline;
 <input type="number" id="rate" placeholder="रेट">
 <input type="number" id="paid" placeholder="मिला पैसा">
 <input type="number" id="expense" placeholder="खर्चा">
+<input type="number" id="commission" placeholder="कमीशन">
 
 <button class="add" onclick="addRecord()">Add</button>
 </div>
@@ -142,7 +143,7 @@ text-decoration:underline;
 <tr>
 <th>Date</th><th>नाम</th><th>गांव</th><th>मोबाइल</th>
 <th>फसल</th><th>एकड़</th><th>कुल</th>
-<th>मिला</th><th>बाकी</th><th>खर्चा</th><th>Action</th>
+<th>मिला</th><th>बाकी</th><th>कमीशन</th><th>खर्चा</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="data"></tbody>
@@ -186,13 +187,17 @@ let records = JSON.parse(localStorage.getItem("harvesterPro")) || [];
 let editIndex = -1;
 let extraRecords = JSON.parse(localStorage.getItem("extraExpense")) || [];
 
+// Persist login state
+let loggedIn = localStorage.getItem("loggedIn") === "true";
+
 const addBtn = document.querySelector(".add");
 
 // Admin password for delete
-const adminPassword = "1254";  // <-- Delete के लिए पासवर्ड, अपनी पसंद का रख सकते हो
+const adminPassword = "1254";  // <-- Delete के लिए पासवर्ड
 
 function login(){
   if(user.value=="V" && pass.value=="1"){
+    localStorage.setItem("loggedIn","true");
     loginPage.style.display="none";
     main.style.display="block";
     show(records);
@@ -203,6 +208,7 @@ function login(){
 }
 
 function logout(){
+  localStorage.setItem("loggedIn","false");
   main.style.display="none";
   loginPage.style.display="flex";
 }
@@ -221,11 +227,13 @@ function clearFields(){
   rate.value="";
   paid.value="";
   expense.value="";
+  commission.value="";
 }
 
 function addRecord(){
   let total = acre.value * rate.value;
   let due = total - paid.value;
+  let comm = +commission.value || 0;
 
   if(editIndex === -1){
     records.push({
@@ -239,6 +247,7 @@ function addRecord(){
       total:total,
       paid:+paid.value,
       due:due,
+      commission:comm,
       expense:+expense.value || 0
     });
   } else {
@@ -253,6 +262,7 @@ function addRecord(){
       total:total,
       paid:+paid.value,
       due:due,
+      commission:comm,
       expense:+expense.value || 0
     };
     editIndex = -1;
@@ -292,6 +302,7 @@ function show(dataArr){
     <td>${r.total}</td>
     <td>${r.paid}</td>
     <td class="${r.due>0?'dueHighlight':''}">${r.due}</td>
+    <td>${r.commission}</td>
     <td>${r.expense}</td>
     <td>
       <button class="edit" onclick="editRecord(${i})">Edit</button>
@@ -339,6 +350,7 @@ function editRecord(i){
   rate.value=r.rate;
   paid.value=r.paid;
   expense.value=r.expense;
+  commission.value=r.commission;
   editIndex = i;
   addBtn.innerText = "Update";
 }
@@ -361,9 +373,9 @@ function filterByDate(){
 }
 
 function downloadExcel(){
-  let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Expense\n';
+  let csv = 'Date,Name,Village,Mobile,Crop,Acre,Rate,Total,Paid,Due,Commission,Expense\n';
   records.forEach(r=>{
-    csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.expense}\n`;
+    csv += `${r.date},${r.farmer},${r.village},${r.mobile},${r.crop},${r.acre},${r.rate},${r.total},${r.paid},${r.due},${r.commission},${r.expense}\n`;
   });
   let blob = new Blob([csv]);
   let a = document.createElement("a");
@@ -434,10 +446,18 @@ function deleteExtra(i){
 }
 
 // Page load
-  window.onload = function(){
+window.onload = function(){
   let today = new Date().toISOString().split("T")[0];
   date.value = today;
   extraDate.value = today;
+
+  // Auto-login if previously logged in
+  if(loggedIn){
+    loginPage.style.display="none";
+    main.style.display="block";
+    show(records);
+    showExtra();
+  }
 };
 showExtra();
 </script>
