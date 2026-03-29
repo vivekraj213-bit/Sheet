@@ -434,6 +434,11 @@ function deleteExtra(i){
 }
 
 // Page load
+  window.onload = function(){
+  let today = new Date().toISOString().split("T")[0];
+  date.value = today;
+  extraDate.value = today;
+};
 showExtra();
 </script>
 
